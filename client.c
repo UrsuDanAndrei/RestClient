@@ -21,8 +21,12 @@
 #define JSON_TYPE "application/json"
 #define URL_REGISTER "/api/v1/tema/auth/register"
 #define URL_LOGIN "/api/v1/tema/auth/login"
+#define URL_LIBRARY_ACCESS "/api/v1/tema/library/access"
+#define CONNECT_SID "connect.sid="
+#define CONTENT_LEN "Content-Length:"
+#define LEN_NUMBER_OFFSET 17
 
-char* get_json_string_username_password(const char *username, const char *password) {
+char *get_json_string_username_password(const char *username, const char *password) {
     JSON_Value *root_value = json_value_init_object();
     JSON_Object *root_object = json_value_get_object(root_value);
 
@@ -31,6 +35,17 @@ char* get_json_string_username_password(const char *username, const char *passwo
 
     char *serialized_string = json_serialize_to_string_pretty(root_value);
     return serialized_string;
+}
+
+char *get_session_cookie(char *msg) {
+    char *posStartCookie = strstr(msg, CONNECT_SID);
+    char *posEndCookie = strchr(posStartCookie, ';');
+
+    int cookieLen = posEndCookie - posStartCookie;
+    char *cookie = (char *) calloc((cookieLen + 1), sizeof(char));
+
+    memcpy(cookie, posStartCookie, cookieLen);
+    return cookie;
 }
 
 void register_account(int sockfd, const char *username, const char *password) {
@@ -44,7 +59,7 @@ void register_account(int sockfd, const char *username, const char *password) {
     printf("\nRaspuns autentificare: \n%s\n", response);
 }
 
-void login(int sockfd, const char *username, const char *password) {
+char* login(int sockfd, const char *username, const char *password) {
     char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
 
@@ -52,9 +67,23 @@ void login(int sockfd, const char *username, const char *password) {
     send_to_server(sockfd, msg);
 
     char *response = receive_from_server(sockfd);
-    printf("\nRaspuns login: \n%s\n", response);
+    return response;
 }
 
+char *get_library_access(int sockfd, char *session_cookie) {
+    char **cookies = calloc(1, sizeof(char *));
+    cookies[0] = session_cookie;
+
+    char *msg = compute_get_request(HOST_NAME, URL_LIBRARY_ACCESS, NULL, cookies, 1);    
+    send_to_server(sockfd, msg);
+
+    char *response = receive_from_server(sockfd);
+    return response;
+}
+
+char *get_message_body(const char* response) {
+    strstr
+}
 
 int main(int argc, char *argv[]) {
 
@@ -66,14 +95,21 @@ int main(int argc, char *argv[]) {
     char **request_params = calloc(2, sizeof(char *));
 
     struct hostent *hostInfo = gethostbyname(HOST_NAME);
-    char *hostIp = inet_ntoa((struct in_addr) * ((struct in_addr *)hostInfo->h_addr_list[0]));
+    char *hostIp = inet_ntoa((struct in_addr) *((struct in_addr *)hostInfo->h_addr_list[0]));
     int sockfd = open_connection(hostIp, 8080, AF_INET, SOCK_STREAM, 0);
 
     // ------------------------------------
-    login(sockfd, USERNAME, PASSWORD);
+    response = login(sockfd, USERNAME, PASSWORD);
+    printf("\nRaspuns login: \n%s\n", response);
 
+    char *session_cookie = get_session_cookie(response);
+    printf("\ncookie: %s\n", session_cookie);
 
+    response = get_library_access(sockfd, session_cookie);
+    printf("%s\n\n6 ==========\n", response);
 
+    char *body = get_message_body(response);
+    
 
     // Ex 1.2: POST dummy and print response from main server
 //     dummy[0] = strdup("key1=val1");
