@@ -1,30 +1,4 @@
-#include <stdio.h>      /* printf, sprintf */
-#include <stdlib.h>     /* exit, atoi, malloc, free */
-#include <unistd.h>     /* read, write, close */
-#include <string.h>     /* memcpy, memset */
-#include <sys/socket.h> /* socket, connect */
-#include <netinet/in.h> /* struct sockaddr_in, struct sockaddr */
-#include <netdb.h>      /* struct hostent, gethostbyname */
-#include <arpa/inet.h>
-
-
-#include "helpers.h"
-#include "requests.h"
-#include "parson.h"
-
-#define HOST_NAME "ec2-3-8-116-10.eu-west-2.compute.amazonaws.com"
-#define MAX_BODY_FIELDS 10
-
-#define USERNAME "GigelCelZambaret"
-#define PASSWORD "oP@r0La_PuTeRn1Ca"
-
-#define JSON_TYPE "application/json"
-#define URL_REGISTER "/api/v1/tema/auth/register"
-#define URL_LOGIN "/api/v1/tema/auth/login"
-#define URL_LIBRARY_ACCESS "/api/v1/tema/library/access"
-#define CONNECT_SID "connect.sid="
-#define CONTENT_LEN "Content-Length:"
-#define LEN_NUMBER_OFFSET 17
+#include "client.h"
 
 char *get_json_string_username_password(const char *username, const char *password) {
     JSON_Value *root_value = json_value_init_object();
@@ -81,8 +55,114 @@ char *get_library_access(int sockfd, char *session_cookie) {
     return response;
 }
 
-char *get_message_body(const char* response) {
-    strstr
+char *get_message_body(const char* msg) {
+    char *posStartLen = strstr(msg, CONTENT_LEN);
+    posStartLen += LEN_NUMBER_OFFSET;
+
+    // pentru o functionare corecta a functiei atoi se plaseaza '\0' la finalul numarului
+    char *posEndLen = strchr(posStartLen, '\r');
+    *posEndLen = '\0';
+
+    int bodyLen = atoi(posStartLen);
+    *posEndLen = '\r';
+
+    char *posStartBody = strstr(msg, BODY_START_STRING);
+    posStartBody += BODY_OFFSET;
+
+    char *body = calloc(bodyLen, sizeof(char));
+    memcpy(body, posStartBody, bodyLen);
+
+    return body;
+}
+
+char *get_token_from_body(const char* body) {
+    JSON_Value *json_body = json_parse_string(body);
+    char *token = json_object_get_string(json_object(json_body), TOKEN);
+    return token;
+}
+
+int execute_command_from_stdin(int sockfd, const user** users, int *users_count) {
+    char *ret_ptr;
+
+    char command[MAX_COMMAND_LEN];
+    memset(command, 0, MAX_COMMAND_LEN);
+
+    ret_ptr = fgets(command, MAX_COMMAND_LEN - 1, stdin);
+    DIE(ret_ptr == NULL, "fgets");
+
+    if (strcmp(command, REGISTER_CMD) == 0) {
+        // reads username
+        char username[MAX_USERNAME_LEN];
+        memset(username, 0, MAX_USERNAME_LEN);
+        printf("username=\n");
+
+        ret_ptr = fgets(username, MAX_USERNAME_LEN - 1, stdin);
+        DIE(ret_ptr == NULL, "fgets");
+
+        // !!! poate faci sa se citeasca ca ***, sau deloc sa nu apara
+
+        // reads password
+        char password[MAX_PASSWORD_LEN];
+        memset(password, 0, MAX_PASSWORD_LEN);
+
+        printf("password=\n");
+        ret_ptr = fgets(password, MAX_PASSWORD_LEN - 1, stdin);
+        DIE(ret_ptr == NULL, "fgets");
+
+        register_account(sockfd, username, password);
+        users[*users_count] = create_user(username, password);
+        ++(*users_count);
+    } else if (strcmp(command, LOGIN_CMD) == 0) {
+        // reads username
+        char username[MAX_USERNAME_LEN];
+        memset(username, 0, MAX_USERNAME_LEN);
+        printf("username=\n");
+
+        ret_ptr = fgets(username, MAX_USERNAME_LEN - 1, stdin);
+        DIE(ret_ptr == NULL, "fgets");
+
+        // !!! poate faci sa se citeasca ca ***, sau deloc sa nu apara
+
+        // reads password
+        char password[MAX_PASSWORD_LEN];
+        memset(password, 0, MAX_PASSWORD_LEN);
+
+        printf("password=\n");
+        ret_ptr = fgets(password, MAX_PASSWORD_LEN - 1, stdin);
+        DIE(ret_ptr == NULL, "fgets");
+
+        user *usr = find_user(username, password, users, *users_count);
+        if (usr == NULL) {
+            printf("\nWrong username or password\n\n");
+            return -1;
+        }
+
+        char *session_cookie = login(sockfd, username, password);
+        if (session_cookie == NULL) {
+            printf("\nSomething went wrong, please try again\n\n");
+            return -1;
+        }
+        
+        add_session_cookie_to_user(usr, session_cookie);
+    } else if (strcmp(command, ENTER_CMD) == 0) {
+        
+    } else if (strcmp(command, GET_BOOKS_CMD) == 0) {
+        
+    } else if (strcmp(command, GET_BOOK_CMD) == 0) {
+        
+    } else if (strcmp(command, ADD_BOOK_CMD) == 0) {
+        
+    } else if (strcmp(command, DELETE_BOOK_CMD) == 0) {
+        
+    } else if (strcmp(command, LOGOUT_CMD) == 0) {
+        
+    } else if (strcmp(command, LOGOUT_CMD) == 0) {
+        
+    } else if (strcmp(command, EXIT_CMD) == 0) {
+        return 0;
+    }
+
+    return 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -99,6 +179,13 @@ int main(int argc, char *argv[]) {
     int sockfd = open_connection(hostIp, 8080, AF_INET, SOCK_STREAM, 0);
 
     // ------------------------------------
+    // while (1) {
+    //     ret_code = execute_command_from_stdin(sockfd);
+            // if (ret_code == 0) {
+            //     return 0;
+            // }
+    // }
+    
     response = login(sockfd, USERNAME, PASSWORD);
     printf("\nRaspuns login: \n%s\n", response);
 
@@ -109,7 +196,8 @@ int main(int argc, char *argv[]) {
     printf("%s\n\n6 ==========\n", response);
 
     char *body = get_message_body(response);
-    
+    char *token = get_token_from_body(body);
+    printf("\ntoken: %s\n", token);
 
     // Ex 1.2: POST dummy and print response from main server
 //     dummy[0] = strdup("key1=val1");
