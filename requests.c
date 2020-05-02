@@ -17,11 +17,21 @@ char *compute_request(reuqest_type type, char *host, char *url, char **query_par
     char *message = calloc(BUFLEN, sizeof(char));
     char *line = calloc(LINELEN, sizeof(char));
     char *body_data_buffer = NULL;
+    char *all_query_params = NULL;
+
+    if (query_params != NULL) {
+        all_query_params = calloc(LINELEN, sizeof(char));
+        strcat(all_query_params, query_params[0]);
+        for (int i = 1; i < querys_count; ++i) {
+            strcat(all_query_params, "&");
+            strcat(all_query_params, query_params[i]);
+        }
+    }
 
     switch(type) {
         case GET:
             if (query_params != NULL) {
-                sprintf(line, "GET %s?%s HTTP/1.1", url, query_params);
+                sprintf(line, "GET %s?%s HTTP/1.1", url, all_query_params);
             } else {
                 sprintf(line, "GET %s HTTP/1.1", url);
             }
@@ -29,7 +39,7 @@ char *compute_request(reuqest_type type, char *host, char *url, char **query_par
 
         case POST:
             if (query_params != NULL) {
-                sprintf(line, "POST %s?%s HTTP/1.1", url, query_params);
+                sprintf(line, "POST %s?%s HTTP/1.1", url, all_query_params);
             } else {
                 sprintf(line, "POST %s HTTP/1.1", url);
             }
@@ -37,9 +47,9 @@ char *compute_request(reuqest_type type, char *host, char *url, char **query_par
         
         case DELETE:
             if (query_params != NULL) {
-                sprintf(line, "DELETE %s?%s HTTP/1.1", url, query_params);
+                sprintf(line, "DELETE %s?%s HTTP/1.1", url, all_query_params);
             } else {
-                sprintf(line, "DELTE %s HTTP/1.1", url);
+                sprintf(line, "DELETE %s HTTP/1.1", url);
             }
             break;
         

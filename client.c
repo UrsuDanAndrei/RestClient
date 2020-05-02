@@ -41,7 +41,7 @@ void register_account(int sockfd, const char *username, const char *password) {
     char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
 
-    char *msg = compute_post_request(HOST_NAME, URL_REGISTER, JSON_TYPE, body_fields, 1, NULL, 0, NULL, 0);
+    char *msg = compute_request(POST, HOST_NAME, URL_REGISTER, NULL, 0, NULL, 0, NULL, 0, JSON_TYPE, body_fields, 1);
     printf("din register_account, de trimis: %s\n", msg);
     send_to_server(sockfd, msg);
 
@@ -54,7 +54,7 @@ char* login(int sockfd, const char *username, const char *password) {
     char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
 
-    char *msg = compute_post_request(HOST_NAME, URL_LOGIN, JSON_TYPE, body_fields, 1, NULL, 0, NULL, 0);
+    char *msg = compute_request(POST, HOST_NAME, URL_LOGIN, NULL, 0, NULL, 0, NULL, 0, JSON_TYPE, body_fields, 1);
     send_to_server(sockfd, msg);
     printf("\ntrimis din loging: %s\n", msg);
 
@@ -69,7 +69,7 @@ char *get_library_access(int sockfd, char *session_cookie) {
     char **cookies = calloc(1, sizeof(char *));
     cookies[0] = session_cookie;
 
-    char *msg = compute_get_request(HOST_NAME, URL_LIBRARY_ACCESS, NULL, cookies, 1, NULL, 0);    
+    char *msg = compute_request(GET, HOST_NAME, URL_LIBRARY_ACCESS, NULL, 0, NULL, 0, cookies, 1, NULL, NULL, 0);    
     send_to_server(sockfd, msg);
 
     char *response = receive_from_server(sockfd);
@@ -103,7 +103,7 @@ char *get_token_from_body(char* body) {
 }
 
 int add_book(int sockfd, const char *token, const char *title, const char *author, const char *genre, int page_count, const char *publisher) {
-    
+
 }
 
 int execute_command_from_stdin(int sockfd, user **users, int *user_count) {
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
     memcpy(headers[0] + 22, token, strlen(token));
   //  printf("\nheader-ul arata asa: %s\n", headers[0]);
 
-    msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
+    msg = compute_request(GET, HOST_NAME, URL_BOOKS, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
@@ -288,7 +288,8 @@ int main(int argc, char *argv[]) {
 
     //the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
     //printf("\nJSON-ul arata asa: %s\n", the_body[0]);
-    msg = compute_delete_request(HOST_NAME, "/api/v1/tema/library/books/277", JSON_TYPE, NULL, 0, NULL, 0, headers, 1);
+    msg = compute_request(DELETE, HOST_NAME, "/api/v1/tema/library/books/278", NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
+    printf("TRIMIT MESAJUL: %s\n", msg);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
@@ -296,7 +297,7 @@ int main(int argc, char *argv[]) {
 
     //  get all books !!!!!!!!!!!!!!!!!1
 
-    msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
+    msg = compute_request(GET, HOST_NAME, URL_BOOKS, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
@@ -306,7 +307,7 @@ int main(int argc, char *argv[]) {
     // logout
     //
     cookies[0] = session_cookie;
-    msg = compute_get_request(HOST_NAME, URL_LOGOUT, NULL, cookies, 1, NULL, 0);
+    msg = compute_request(GET, HOST_NAME, URL_LOGOUT, NULL, 0, NULL, 0, cookies, 1, NULL, NULL, 0);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
