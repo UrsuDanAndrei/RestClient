@@ -30,7 +30,7 @@ char *compute_get_request(char *host, char *url, char *query_params,
     compute_message(message, line);
     memset(line, 0, LINELEN);
 
-        for (int i = 0; i < headers_count; ++i) {
+    for (int i = 0; i < headers_count; ++i) {
         memset(line, 0, LINELEN);
         sprintf(line, "%s", headers[i]);
         compute_message(message, line);
@@ -65,7 +65,7 @@ char *compute_get_request(char *host, char *url, char *query_params,
 }
 
 char *compute_post_request(char *host, char *url, char* content_type, char **body_data,
-                            int body_data_fields_count, char **cookies, int cookies_count)
+                            int body_data_fields_count, char **cookies, int cookies_count, char **headers, int headers_count)
 {
     char *message = calloc(BUFLEN, sizeof(char));
     char *line = calloc(LINELEN, sizeof(char));
@@ -84,6 +84,13 @@ char *compute_post_request(char *host, char *url, char* content_type, char **bod
     /* Step 3: add necessary headers (Content-Type and Content-Length are mandatory)
             in order to write Content-Length you must first compute the message size
     */
+
+    for (int i = 0; i < headers_count; ++i) {
+        memset(line, 0, LINELEN);
+        sprintf(line, "%s", headers[i]);
+        compute_message(message, line);
+    }
+
     sprintf(line, "User-Agent: %s", "Mozilla/5.0");
     compute_message(message, line);
     memset(line, 0, LINELEN);

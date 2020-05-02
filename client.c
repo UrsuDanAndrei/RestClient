@@ -11,6 +11,20 @@ char *get_json_string_username_password(const char *username, const char *passwo
     return serialized_string;
 }
 
+char *get_json_string_book(const char *title, const char *author, const char *genre, int page_count, const char *publisher) {
+    JSON_Value *root_value = json_value_init_object();
+    JSON_Object *root_object = json_value_get_object(root_value);
+
+    json_object_set_string(root_object, "title", title);
+    json_object_set_string(root_object, "author", author);
+    json_object_set_string(root_object, "genre", genre);
+    json_object_set_number(root_object, "page_count", page_count);
+    json_object_set_string(root_object, "publisher", publisher);
+
+    char *serialized_string = json_serialize_to_string_pretty(root_value);
+    return serialized_string;
+}
+
 char *get_session_cookie(char *msg) {
     printf("\ndin get_session_cookie: %s\n", msg);
     char *posStartCookie = strstr(msg, CONNECT_SID);
@@ -27,7 +41,7 @@ void register_account(int sockfd, const char *username, const char *password) {
     char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
 
-    char *msg = compute_post_request(HOST_NAME, URL_REGISTER, JSON_TYPE, body_fields, 1, NULL, 0);
+    char *msg = compute_post_request(HOST_NAME, URL_REGISTER, JSON_TYPE, body_fields, 1, NULL, 0, NULL, 0);
     printf("din register_account, de trimis: %s\n", msg);
     send_to_server(sockfd, msg);
 
@@ -40,7 +54,7 @@ char* login(int sockfd, const char *username, const char *password) {
     char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
 
-    char *msg = compute_post_request(HOST_NAME, URL_LOGIN, JSON_TYPE, body_fields, 1, NULL, 0);
+    char *msg = compute_post_request(HOST_NAME, URL_LOGIN, JSON_TYPE, body_fields, 1, NULL, 0, NULL, 0);
     send_to_server(sockfd, msg);
     printf("\ntrimis din loging: %s\n", msg);
 
@@ -190,6 +204,7 @@ int main(int argc, char *argv[]) {
     char **cookies = calloc(2, sizeof(char *));
     char **request_params = calloc(2, sizeof(char *));
     char **headers = calloc(2, sizeof(char *));
+    char **the_body = calloc(2, sizeof(char *));
 
     struct hostent *hostInfo = gethostbyname(HOST_NAME);
     char *hostIp = inet_ntoa((struct in_addr) *((struct in_addr *)hostInfo->h_addr_list[0]));
@@ -231,6 +246,20 @@ int main(int argc, char *argv[]) {
     response = receive_from_server(sockfd);
     printf("%s\n\n3 ===========\n", response);
 
+    the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
+    printf("\nJSON-ul arata asa: %s\n", the_body[0]);
+    msg = compute_post_request(HOST_NAME, URL_BOOKS, JSON_TYPE, the_body, 1, NULL, 0, headers, 1);
+    send_to_server(sockfd, msg);
+
+    response = receive_from_server(sockfd);
+    printf("%s\n\n3 ===========\n", response);
+
+    msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
+    printf("Mesajul arata asa: %s\n", msg);
+    send_to_server(sockfd, msg);
+
+    response = receive_from_server(sockfd);
+    printf("%s\n\n3 ===========\n", response);
     // Ex 1.2: POST dummy and print response from main server
 //     dummy[0] = strdup("key1=val1");
 //     dummy[1] = strdup("key2=val2");
