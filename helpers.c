@@ -85,6 +85,7 @@ char *receive_from_server(int sockfd)
         }
 
         if (bytes == 0) {
+            printf("\n AAAAAAAAAAA: S-a stricat conexiunea vere, pare rau\n");
             break;
         }
 

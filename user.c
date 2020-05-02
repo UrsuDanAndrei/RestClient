@@ -19,7 +19,7 @@ user* create_user(const char *username, const char *password) {
     return usr;
 }
 
-user* find_user(const char *username, const char *password, const user** users, int users_count) {
+user* find_user(const char *username, const char *password, user** users, int users_count) {
     for (int i = 0; i < users_count; ++i) {
         if (strcmp(users[i]->name, username) == 0) {
             if (strcmp(users[i]->password, password) == 0) {

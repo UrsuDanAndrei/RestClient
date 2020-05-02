@@ -10,7 +10,7 @@
 #include "requests.h"
 
 char *compute_get_request(char *host, char *url, char *query_params,
-                            char **cookies, int cookies_count)
+                            char **cookies, int cookies_count, char **headers, int headers_count)
 {
     char *message = calloc(BUFLEN, sizeof(char));
     char *line = calloc(LINELEN, sizeof(char));
@@ -30,6 +30,12 @@ char *compute_get_request(char *host, char *url, char *query_params,
     compute_message(message, line);
     memset(line, 0, LINELEN);
 
+        for (int i = 0; i < headers_count; ++i) {
+        memset(line, 0, LINELEN);
+        sprintf(line, "%s", headers[i]);
+        compute_message(message, line);
+    }
+
     // Step 3 (optional): add headers and/or cookies, according to the protocol format
     sprintf(line, "User-Agent: %s", "Mozilla/5.0");
     compute_message(message, line);
@@ -37,9 +43,10 @@ char *compute_get_request(char *host, char *url, char *query_params,
 
     sprintf(line, "Connection: %s", "keep-alive");
     compute_message(message, line);
-    memset(line, 0, LINELEN);
+
 
     if (cookies != NULL) {
+        memset(line, 0, LINELEN);
         sprintf(line, "Cookie: %s", cookies[0]);
 
         for (int i = 1; i < cookies_count; ++i) {
@@ -57,7 +64,7 @@ char *compute_get_request(char *host, char *url, char *query_params,
     return message;
 }
 
-char *compute_post_request(char *host, char *url,    char* content_type, char **body_data,
+char *compute_post_request(char *host, char *url, char* content_type, char **body_data,
                             int body_data_fields_count, char **cookies, int cookies_count)
 {
     char *message = calloc(BUFLEN, sizeof(char));
