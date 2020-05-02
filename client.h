@@ -31,6 +31,7 @@
 #define URL_LOGIN "/api/v1/tema/auth/login"
 #define URL_LIBRARY_ACCESS "/api/v1/tema/library/access"
 #define URL_BOOKS "/api/v1/tema/library/books"
+#define URL_LOGOUT "/api/v1/tema/auth/logout"
 
 #define CONNECT_SID "connect.sid="
 #define CONTENT_LEN "Content-Length: "

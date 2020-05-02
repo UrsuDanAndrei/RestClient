@@ -234,32 +234,80 @@ int main(int argc, char *argv[]) {
     char *token = get_token_from_body(body);
     printf("\ntoken: %s\n", token);
 
+    //
+    //  get all boooks !!!!!!!!!!!!!!!!!!
+    //
     headers[0] = calloc(22 + strlen(token) + 2, sizeof(char));
     strcpy(headers[0], "Authorization: Bearer ");
     memcpy(headers[0] + 22, token, strlen(token));
   //  printf("\nheader-ul arata asa: %s\n", headers[0]);
 
     msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
-    printf("Mesajul arata asa: %s\n", msg);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
-    printf("%s\n\n3 ===========\n", response);
+    printf("%s\n\n30 ===========\n", response);
 
-    the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
-    printf("\nJSON-ul arata asa: %s\n", the_body[0]);
-    msg = compute_post_request(HOST_NAME, URL_BOOKS, JSON_TYPE, the_body, 1, NULL, 0, headers, 1);
+    //
+    // add a book !!!!!!!!!!!!!!1
+    //
+    // the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
+    // printf("\nJSON-ul arata asa: %s\n", the_body[0]);
+    // msg = compute_post_request(HOST_NAME, URL_BOOKS, JSON_TYPE, the_body, 1, NULL, 0, headers, 1);
+    // send_to_server(sockfd, msg);
+
+    // response = receive_from_server(sockfd);
+    // printf("%s\n\n3 ===========\n", response);
+
+    // the_body[0] = get_json_string_book("a doua carte", "eu", "drama", 200, "nu s-a publicat inca");
+    // printf("\nJSON-ul arata asa: %s\n", the_body[0]);
+    // msg = compute_post_request(HOST_NAME, URL_BOOKS, JSON_TYPE, the_body, 1, NULL, 0, headers, 1);
+    // send_to_server(sockfd, msg);
+
+    // response = receive_from_server(sockfd);
+    // printf("%s\n\n3 ===========\n", response);
+
+
+    // // 
+    // //  get all books !!!!!!!!!!!!!!!!!1
+    // //
+    // msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
+    // printf("Mesajul arata asa: %s\n", msg);
+    // send_to_server(sockfd, msg);
+
+    // response = receive_from_server(sockfd);
+    // printf("%s\n\n3 ===========\n", response);
+
+    //
+    // delete a book !!!!!!!!
+    //
+
+    //the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
+    //printf("\nJSON-ul arata asa: %s\n", the_body[0]);
+    msg = compute_delete_request(HOST_NAME, "/api/v1/tema/library/books/277", JSON_TYPE, NULL, 0, NULL, 0, headers, 1);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
-    printf("%s\n\n3 ===========\n", response);
+    printf("%s\n\n1000 ===========\n", response);
+
+    //  get all books !!!!!!!!!!!!!!!!!1
 
     msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
-    printf("Mesajul arata asa: %s\n", msg);
     send_to_server(sockfd, msg);
 
     response = receive_from_server(sockfd);
-    printf("%s\n\n3 ===========\n", response);
+    printf("%s\n\n20000 ===========\n", response);
+
+    //
+    // logout
+    //
+    cookies[0] = session_cookie;
+    msg = compute_get_request(HOST_NAME, URL_LOGOUT, NULL, cookies, 1, NULL, 0);
+    send_to_server(sockfd, msg);
+
+    response = receive_from_server(sockfd);
+    printf("%s\n\n30 ===========\n", response);
+
     // Ex 1.2: POST dummy and print response from main server
 //     dummy[0] = strdup("key1=val1");
 //     dummy[1] = strdup("key2=val2");
