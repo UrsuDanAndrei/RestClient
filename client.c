@@ -102,6 +102,10 @@ char *get_token_from_body(char* body) {
     return token;
 }
 
+int add_book(int sockfd, const char *token, const char *title, const char *author, const char *genre, int page_count, const char *publisher) {
+    
+}
+
 int execute_command_from_stdin(int sockfd, user **users, int *user_count) {
     char *ret_ptr;
 

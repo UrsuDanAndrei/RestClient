@@ -1,6 +1,8 @@
 #ifndef _REQUESTS_
 #define _REQUESTS_
 
+typedef enum {GET, POST, DELETE} reuqest_type;
+
 // computes and returns a GET request string (query_params
 // and cookies can be set to NULL if not needed)
 char *compute_get_request(char *host, char *url, char *query_params,
@@ -13,5 +15,9 @@ char *compute_post_request(char *host, char *url, char* content_type, char **bod
 // computes and returns a POST request string (cookies can be NULL if not needed)
 char *compute_delete_request(char *host, char *url, char* content_type, char **body_data,
 							int body_data_fields_count, char** cookies, int cookies_count, char **headers, int headers_count);
+
+char *compute_request(reuqest_type type, char *host, char *url, char **query_params, int querys_count,
+                        char **headers, int headers_count, char **cookies, int cookies_count,  char* content_type,
+                        char **body_data, int body_data_fields_count);
 
 #endif

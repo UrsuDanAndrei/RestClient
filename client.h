@@ -17,6 +17,8 @@
 #include <unistd.h>     /* read, write, close */
 
 #define HOST_NAME "ec2-3-8-116-10.eu-west-2.compute.amazonaws.com"
+
+// for testing
 #define USERNAME "GigelCelZambaret"
 #define PASSWORD "oP@r0La_PuTeRn1Ca"
 
