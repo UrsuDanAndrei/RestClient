@@ -61,14 +61,32 @@
 #define MAX_ID_SIZE 10
 #define URL_BOOKS_SIZE 26
 
+#define MAX_TITLE_LEN 64
+#define MAX_AUTHOR_LEN 64
+#define MAX_GENRE_LEN 64
+#define MAX_PUBLISHER_LEN 64
+#define MAX_PAGE_COUNT_LEN 10
+
 /* returneaza un string in format JSON ce contine username-ul si parola trimise ca parametru */
 char *get_json_string_username_password(const char *username, const char *password);
+
+char *get_json_string_book(const char *title, const char *author, const char *genre, int page_count, const char *publisher);
 
 /* reurneaza cookie-ul de sesiune extras din mesajul primit ca parametru */
 char *get_session_cookie(char *msg);
 
+/* extrage token-ul JWT din body-ul primit ca parametru */
+char *get_token_from_body(const char* body);
+
+/* extrage componenta body din mesajul HTTP primit ca parametru */
+char *get_message_body(const char* msg);
+
+int connect_with_server();
+
+int is_positiv_number(const char *str);
+
 /* inregistreaza un nou utilizator cu username-ul si parola primite ca parametru */
-void register_account(const char *username, const char *password);
+char *register_account(const char *username, const char *password);
 
 /* logheaza utilizatorul cu username-ul si parola primite ca parametru, returneaza cookie-ul
 pentru sesiunea curenta care s-a creat in urma logarii */
@@ -77,17 +95,19 @@ char* login(const char *username, const char *password);
 /* returneaza token-ul JWT pentru cookie-ul de sesiune primit ca parametru */
 char *get_library_access(char *session_cookie);
 
-/* extrage componenta body din mesajul HTTP primit ca parametru */
-char *get_message_body(const char* msg);
+char *get_all_books(const char *token);
 
-/* extrage token-ul JWT din body-ul primit ca parametru */
-char *get_token_from_body(char* body);
+char *get_book(const char *token, int id);
+
+char *add_book(const char *token, const char *title, const char *author, const char *genre, int page_count, const char *publisher);
+
+char *delete_book(const char *token, int id);
+
+char *logout(const char *session_cookie);
 
 /* executa comenzile primite de la stdin, returneaza 0 in cazul in care s-a primit
 comanda exit si trebuie oprita executia programului, -1 daca s-a introdus o 
 comanda invalida si 1 daca totul este ok */
 int execute_command_from_stdin();
-
-int connect_with_server();
 
 #endif // __CLIENT_H__
