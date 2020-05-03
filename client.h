@@ -62,14 +62,14 @@ char *get_json_string_username_password(const char *username, const char *passwo
 char *get_session_cookie(char *msg);
 
 /* inregistreaza un nou utilizator cu username-ul si parola primite ca parametru */
-void register_account(int sockfd, const char *username, const char *password);
+void register_account(const char *username, const char *password);
 
 /* logheaza utilizatorul cu username-ul si parola primite ca parametru, returneaza cookie-ul
 pentru sesiunea curenta care s-a creat in urma logarii */
-char* login(int sockfd, const char *username, const char *password);
+char* login(const char *username, const char *password);
 
 /* returneaza token-ul JWT pentru cookie-ul de sesiune primit ca parametru */
-char *get_library_access(int sockfd, char *session_cookie);
+char *get_library_access(char *session_cookie);
 
 /* extrage componenta body din mesajul HTTP primit ca parametru */
 char *get_message_body(const char* msg);
@@ -81,5 +81,7 @@ char *get_token_from_body(char* body);
 comanda exit si trebuie oprita executia programului, -1 daca s-a introdus o 
 comanda invalida si 1 daca totul este ok */
 int execute_command_from_stdin();
+
+int connect_with_server();
 
 #endif // __CLIENT_H__
