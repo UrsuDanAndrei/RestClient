@@ -1,6 +1,7 @@
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
 
+#include "commands.h"
 #include "helpers.h"
 #include "parson.h"
 #include "requests.h"
@@ -22,11 +23,6 @@
 #define USERNAME "GigelCelZambaret"
 #define PASSWORD "oP@r0La_PuTeRn1Ca"
 
-#define MAX_USERS 100
-
-#define MAX_USERNAME_LEN 64
-#define MAX_PASSWORD_LEN 64
-
 #define JSON_TYPE "application/json"
 
 #define URL_REGISTER "/api/v1/tema/auth/register"
@@ -40,35 +36,16 @@
 #define LEN_NUMBER_OFFSET 16
 #define TOKEN "token"
 
+#define MAX_ID_SIZE 10
+#define URL_BOOKS_LEN 26
+#define STATUS_CODE_LEN 3
+
 #define BODY_START_STRING "\r\n\r\n"
 #define BODY_OFFSET 4
 #define MAX_BODY_FIELDS 10
 
-#define MAX_COMMAND_LEN 64
-#define REGISTER_CMD "register"
-#define LOGIN_CMD "login"
-#define ENTER_CMD "enter_library"
-#define GET_BOOKS_CMD "get_books"
-#define GET_BOOK_CMD "get_book"
-#define ADD_BOOK_CMD "add_book"
-#define DELETE_BOOK_CMD "delete_book"
-#define LOGOUT_CMD "logout"
-#define EXIT_CMD "exit"
-
 #define AUTHORIZATION_HEADER "Authorization: Bearer "
 #define AUTHORIZATION_HEADER_LEN 22
-
-#define MAX_ID_SIZE 10
-#define URL_BOOKS_SIZE 26
-#define STATUS_CODE_LEN 3
-
-#define MAX_TITLE_LEN 64
-#define MAX_AUTHOR_LEN 64
-#define MAX_GENRE_LEN 64
-#define MAX_PUBLISHER_LEN 64
-#define MAX_PAGE_COUNT_LEN 10
-
-
 
 /* returneaza un string in format JSON ce contine username-ul si parola trimise ca parametru */
 char *get_json_string_username_password(const char *username, const char *password);
