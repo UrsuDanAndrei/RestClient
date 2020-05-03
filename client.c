@@ -45,7 +45,7 @@ int connect_with_server() {
 }
 
 void register_account(const char *username, const char *password) {
-    char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
+    char **body_fields = calloc(1, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
     char *msg = compute_request(POST, HOST_NAME, URL_REGISTER, NULL, 0, NULL, 0, NULL, 0, JSON_TYPE, body_fields, 1);
 
@@ -60,7 +60,7 @@ void register_account(const char *username, const char *password) {
 
 char* login(const char *username, const char *password) {
     printf("\ndin login\n");
-    char **body_fields = calloc(MAX_BODY_FIELDS, sizeof(char *));
+    char **body_fields = calloc(1, sizeof(char *));
     body_fields[0] = get_json_string_username_password(username, password);
     char *msg = compute_request(POST, HOST_NAME, URL_LOGIN, NULL, 0, NULL, 0, NULL, 0, JSON_TYPE, body_fields, 1);
 
@@ -87,7 +87,11 @@ char *get_library_access(char *session_cookie) {
     char *response = receive_from_server(sockfd);
     close_connection(sockfd);
 
-    return response;
+    char *body = get_message_body(response);
+    char *token = get_token_from_body(body);
+    printf("\ntoken: %s\n", token);
+
+    return token;
 }
 
 char *get_message_body(const char* msg) {
@@ -116,13 +120,102 @@ char *get_token_from_body(char* body) {
     return token;
 }
 
-int add_book(int sockfd, const char *token, const char *title, const char *author, const char *genre, int page_count, const char *publisher) {
+void get_all_books(const char *token) {
+    char **headers = calloc(1, sizeof(char *));
+    headers[0] = calloc(AUTHORIZATION_HEADER_LEN + strlen(token) + 1, sizeof(char));
+    strcpy(headers[0], AUTHORIZATION_HEADER);
+    memcpy(headers[0] + AUTHORIZATION_HEADER_LEN, token, strlen(token));
+    char *msg = compute_request(GET, HOST_NAME, URL_BOOKS, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
 
+    int sockfd = connect_with_server();
+    send_to_server(sockfd, msg);
+    char *response = receive_from_server(sockfd);
+    close_connection(sockfd);
+
+    printf("\nDin get_all_books: \n%s\n", response);
 }
 
-int execute_command_from_stdin(int sockfd, user **users, int *user_count) {
-    char *ret_ptr;
+void get_book(const char *token, int id) {
+    char **headers = calloc(1, sizeof(char *));
+    headers[0] = calloc(AUTHORIZATION_HEADER_LEN + strlen(token) + 1, sizeof(char));
+    strcpy(headers[0], AUTHORIZATION_HEADER);
+    memcpy(headers[0] + AUTHORIZATION_HEADER_LEN, token, strlen(token));
 
+    char *urlBook = calloc(URL_BOOKS_SIZE + MAX_ID_SIZE, sizeof(char));
+    memcpy(urlBook, URL_BOOKS, URL_BOOKS_SIZE);
+    urlBook[URL_BOOKS_SIZE] = '/';
+    sprintf(urlBook + URL_BOOKS_SIZE + 1, "%d", id);
+
+    char *msg = compute_request(GET, HOST_NAME, urlBook, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
+
+    int sockfd = connect_with_server();
+    send_to_server(sockfd, msg);
+    char *response = receive_from_server(sockfd);
+    close_connection(sockfd);
+
+    printf("\nDin get book: \n%s\n", response);
+}
+
+void add_book(const char *token, const char *title, const char *author, const char *genre, int page_count, const char *publisher) {
+    char **headers = calloc(1, sizeof(char *));
+    headers[0] = calloc(AUTHORIZATION_HEADER_LEN + strlen(token) + 1, sizeof(char));
+    strcpy(headers[0], AUTHORIZATION_HEADER);
+    memcpy(headers[0] + AUTHORIZATION_HEADER_LEN, token, strlen(token));
+
+    char **body = calloc(1, sizeof(char *));
+    body[0] = get_json_string_book(title, author, genre, page_count, publisher);
+
+    char *msg = compute_request(POST, HOST_NAME, URL_BOOKS, NULL, 0, headers, 1, NULL, 0, JSON_TYPE, body, 1);
+
+    int sockfd = connect_with_server();
+    send_to_server(sockfd, msg);
+    char *response = receive_from_server(sockfd);
+    close_connection(sockfd);
+
+    printf("\nDin add_book: \n%s\n", response);
+}
+
+void delete_book(const char *token, int id) {
+    char **headers = calloc(1, sizeof(char *));
+    headers[0] = calloc(AUTHORIZATION_HEADER_LEN + strlen(token) + 1, sizeof(char));
+    strcpy(headers[0], AUTHORIZATION_HEADER);
+    memcpy(headers[0] + AUTHORIZATION_HEADER_LEN, token, strlen(token));
+
+    char *urlBook = calloc(URL_BOOKS_SIZE + MAX_ID_SIZE, sizeof(char));
+    memcpy(urlBook, URL_BOOKS, URL_BOOKS_SIZE);
+    urlBook[URL_BOOKS_SIZE] = '/';
+    sprintf(urlBook + URL_BOOKS_SIZE + 1, "%d", id);
+
+    printf("\nZZZZZZZZZZZZZZZZZZZ url book: %s\n", urlBook);
+    char *msg = compute_request(DELETE, HOST_NAME, urlBook, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
+
+    int sockfd = connect_with_server();
+    send_to_server(sockfd, msg);
+    char *response = receive_from_server(sockfd);
+    close_connection(sockfd);
+
+    printf("\nDin delelte book: \n%s\n", response);
+}
+
+void logout(const char *session_cookie) {
+    char **cookies = calloc(2, sizeof(char *));
+    cookies[0] = session_cookie;
+
+    int sockfd = connect_with_server();
+    char *msg = compute_request(GET, HOST_NAME, URL_LOGOUT, NULL, 0, NULL, 0, cookies, 1, NULL, NULL, 0);
+    send_to_server(sockfd, msg);
+    char *response = receive_from_server(sockfd);
+    close_connection(sockfd);
+
+    printf("%s\n\n30 ===========\n", response);
+}
+
+int execute_command_from_stdin() {
+    static isLogedIn = 0;
+    static char *cookie = NULL;
+    static char *token = NULL;
+
+    char *ret_ptr;
     char command[MAX_COMMAND_LEN];
     memset(command, 0, MAX_COMMAND_LEN);
 
@@ -135,16 +228,22 @@ int execute_command_from_stdin(int sockfd, user **users, int *user_count) {
         char username[MAX_USERNAME_LEN];
         memset(username, 0, MAX_USERNAME_LEN);
         printf("username=");
+        if (strlen(username) == 0) {
+            printf("\nUsername can not be empty\n");
+            return -1;
+        }
 
         ret_ptr = fgets(username, MAX_USERNAME_LEN - 1, stdin);
         DIE(ret_ptr == NULL, "fgets");
         username[strlen(username) - 1] = '\0';
-        // // !!! poate faci sa se citeasca ca ***, sau deloc sa nu apara
 
-        // // reads password
+        // reads password
         char password[MAX_PASSWORD_LEN];
         memset(password, 0, MAX_PASSWORD_LEN);
         printf("password=");
+        if (strlen(password) == 0) {
+            printf("\nPassword can not be empty\n");
+        }
 
         ret_ptr = fgets(password, MAX_PASSWORD_LEN - 1, stdin);
         DIE(ret_ptr == NULL, "fgets");
@@ -164,7 +263,6 @@ int execute_command_from_stdin(int sockfd, user **users, int *user_count) {
             printf("\nUsername can not be empty\n");
             return -1;
         }
-        // // !!! poate faci sa se citeasca ca ***, sau deloc sa nu apara
 
         // reads password
         char password[MAX_PASSWORD_LEN];
@@ -208,6 +306,15 @@ int execute_command_from_stdin(int sockfd, user **users, int *user_count) {
 }
 
 int main(int argc, char *argv[]) {
+    int ret_code;
+    while (1) {
+        ret_code = execute_command_from_stdin();
+        if (ret_code == 0) {
+            return 0;
+        }
+    }
+
+    return 0;
     char *msg;
     char *response;
     user *users[MAX_USERS];
@@ -223,174 +330,22 @@ int main(int argc, char *argv[]) {
     // int sockfd = connect_with_server();
 
     // ------------------------------------
-    // while (1) {
-    //     ret_code = execute_command_from_stdin(sockfd, users, &users_count);
-    //     if (ret_code == 0) {
-    //         return 0;
-    //     }
-    // }
     
   //  register_account(sockfd, "abc7", "1234");
     char* session_cookie = login(USERNAME, PASSWORD);
     printf("\nSession cookie \n%s\n", session_cookie);
 
-    //char *session_cookie = get_session_cookie(response);
-    //printf("\ncookie: %s\n", session_cookie);
+    char *token = get_library_access(session_cookie);
 
-    response = get_library_access(session_cookie);
-    printf("%s\n\n6 ==========\n", response);
+    get_all_books(token);
+    add_book(token, "tristete", "eu si numai eu", "drama", 1000, "nepublicata");
+    get_all_books(token);
 
-    char *body = get_message_body(response);
-    printf("body: %s\n", body);
+    delete_book(token, 443);
+    get_all_books(token);
 
-    char *token = get_token_from_body(body);
-    printf("\ntoken: %s\n", token);
-
-    //
-    //  get all boooks !!!!!!!!!!!!!!!!!!
-    //
-    headers[0] = calloc(22 + strlen(token) + 2, sizeof(char));
-    strcpy(headers[0], "Authorization: Bearer ");
-    memcpy(headers[0] + 22, token, strlen(token));
-  //  printf("\nheader-ul arata asa: %s\n", headers[0]);
-
-    int sockfd = connect_with_server();
-    msg = compute_request(GET, HOST_NAME, URL_BOOKS, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
-    send_to_server(sockfd, msg);
-
-    response = receive_from_server(sockfd);
-    printf("%s\n\n30 ===========\n", response);
-    close_connection(sockfd);
-
-    //
-    // add a book !!!!!!!!!!!!!!1
-    //
-    // the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
-    // printf("\nJSON-ul arata asa: %s\n", the_body[0]);
-    // msg = compute_post_request(HOST_NAME, URL_BOOKS, JSON_TYPE, the_body, 1, NULL, 0, headers, 1);
-    // send_to_server(sockfd, msg);
-
-    // response = receive_from_server(sockfd);
-    // printf("%s\n\n3 ===========\n", response);
-
-    // the_body[0] = get_json_string_book("a doua carte", "eu", "drama", 200, "nu s-a publicat inca");
-    // printf("\nJSON-ul arata asa: %s\n", the_body[0]);
-    // msg = compute_post_request(HOST_NAME, URL_BOOKS, JSON_TYPE, the_body, 1, NULL, 0, headers, 1);
-    // send_to_server(sockfd, msg);
-
-    // response = receive_from_server(sockfd);
-    // printf("%s\n\n3 ===========\n", response);
-
-
-    // // 
-    // //  get all books !!!!!!!!!!!!!!!!!1
-    // //
-    // msg = compute_get_request(HOST_NAME, URL_BOOKS, NULL, NULL, 0, headers, 1);
-    // printf("Mesajul arata asa: %s\n", msg);
-    // send_to_server(sockfd, msg);
-
-    // response = receive_from_server(sockfd);
-    // printf("%s\n\n3 ===========\n", response);
-
-    //
-    // delete a book !!!!!!!!
-    //
-
-    //the_body[0] = get_json_string_book("prima carte", "eu personal", "comedie", 700, "nu s-a publicat inca");
-    //printf("\nJSON-ul arata asa: %s\n", the_body[0]);
-    sockfd = connect_with_server();
-    msg = compute_request(DELETE, HOST_NAME, "/api/v1/tema/library/books/241", NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
-    printf("TRIMIT MESAJUL: %s\n", msg);
-    send_to_server(sockfd, msg);
-
-    response = receive_from_server(sockfd);
-    printf("%s\n\n1000 ===========\n", response);
-    close_connection(sockfd);
-
-    //  get all books !!!!!!!!!!!!!!!!!1
-
-    sockfd = connect_with_server();
-    msg = compute_request(GET, HOST_NAME, URL_BOOKS, NULL, 0, headers, 1, NULL, 0, NULL, NULL, 0);
-    send_to_server(sockfd, msg);
-
-    response = receive_from_server(sockfd);
-    printf("%s\n\n20000 ===========\n", response);
-    close_connection(sockfd);
-    //
-    // logout
-    //
-    sockfd = connect_with_server();
-    cookies[0] = session_cookie;
-    msg = compute_request(GET, HOST_NAME, URL_LOGOUT, NULL, 0, NULL, 0, cookies, 1, NULL, NULL, 0);
-    send_to_server(sockfd, msg);
-
-    response = receive_from_server(sockfd);
-    printf("%s\n\n30 ===========\n", response);
-    close_connection(sockfd);
-    // Ex 1.2: POST dummy and print response from main server
-//     dummy[0] = strdup("key1=val1");
-//     dummy[1] = strdup("key2=val2");
-
-//     message = compute_post_request(host, "/api/v1/dummy", "application/x-www-form-urlencoded", dummy, 2, NULL, 0);
-//     send_to_server(sockfd, message);
-
-//     response = receive_from_server(sockfd);
-//     printf("%s\n\n3 ===========\n", response);
-
-//     printf("\n === celalat server === \n\n");
-
-
-//     // Ex 2: Login into main server
-//     cookies[0] = strdup("connect.sid=s%3AdNbAeMMOlXxWgbbN23QNeYC_S_oanahv.yJPp7me%2BiLydWdiUFnlqcS2jRswejL%2FULiEi4lU7ppY");
-
-//     char host2[] = "api.openweathermap.org";
-//     char *ip2 = inet_ntoa((struct in_addr) * ((struct in_addr *)
-//             gethostbyname(host2)->h_addr_list[0]));
-//     int sockfd2 = open_connection(ip2, 80, AF_INET, SOCK_STREAM, 0);
-
-//     auth[0] = strdup("username=student&");
-//     auth[1] = strdup("password=student");
-
-//     message = compute_post_request(host, "/api/v1/auth/login", "application/x-www-form-urlencoded", auth, 2, NULL, 0);
-//     send_to_server(sockfd, message);
-
-//     response = receive_from_server(sockfd);
-//     printf("%s\n\n4 =======\n", response);
-
-//     // BONUS: make the main server return "Already logged in!"
-//     auth[0] = strdup("username=student&");
-//     auth[1] = strdup("password=student");
-
-//     message = compute_post_request(host, "/api/v1/auth/login", "application/x-www-form-urlencoded", auth, 2, cookies, 1);
-//     send_to_server(sockfd, message);
-
-//     response = receive_from_server(sockfd);
-//     printf("%s\n\n5 ======\n", response);
-
-//     // Ex 3: GET weather key from main server
-//     message = compute_get_request(host, "/api/v1/weather/key", NULL, cookies, 1);    
-//     send_to_server(sockfd, message);
-
-//     response = receive_from_server(sockfd);
-//     printf("%s\n\n6 ==========\n", response);
-
-//     // Ex 4: GET weather data from OpenWeather API
-//     char query_params[] = "lat=44.426765&lon=26.102537&appid=b912dd495585fbf756dc6d8f415a7649";
-//     message = compute_get_request(host2, "/data/2.5/weather", query_params, cookies, 1);
-//     send_to_server(sockfd2, message);
-
-//     response = receive_from_server(sockfd2);
-//     printf("%s\n\n7 ==========\n", response);
-
-//     // Ex 6: Logout from main server
-//     message = compute_get_request(host, "/api/v1/auth/logout", NULL, cookies, 1);    
-//     send_to_server(sockfd, message);
-
-//     response = receive_from_server(sockfd);
-//     printf("%s\n\n7 =============\n", response);
-
-  //  close_connection(sockfd);
-    // close_connection(sockfd2);
+    get_book(token, 266);
+    logout(session_cookie);
 
     return 0;
 }

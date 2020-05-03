@@ -55,6 +55,12 @@
 #define LOGOUT_CMD "logout"
 #define EXIT_CMD "exit"
 
+#define AUTHORIZATION_HEADER "Authorization: Bearer "
+#define AUTHORIZATION_HEADER_LEN 22
+
+#define MAX_ID_SIZE 10
+#define URL_BOOKS_SIZE 26
+
 /* returneaza un string in format JSON ce contine username-ul si parola trimise ca parametru */
 char *get_json_string_username_password(const char *username, const char *password);
 
