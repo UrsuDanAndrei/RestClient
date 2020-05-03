@@ -36,13 +36,13 @@ char *get_session_cookie(char *msg) {
     return cookie;
 }
 
-char *get_token_from_body(const char* body) {
+char *get_token_from_body(const char *body) {
     JSON_Value *json_body = json_parse_string(body);
     char *token = (char *) json_object_get_string(json_object(json_body), TOKEN);
     return token;
 }
 
-char *get_message_body(const char* msg) {
+char *get_message_body(const char *msg) {
     char *posStartLen = strstr(msg, CONTENT_LEN);
     posStartLen += LEN_NUMBER_OFFSET;
 
@@ -60,6 +60,17 @@ char *get_message_body(const char* msg) {
     memcpy(body, posStartBody, bodyLen);
 
     return body;
+}
+
+int get_status_code(const char *msg) {
+    char *posStatusCodeStart = strchr(msg, ' ');
+    ++posStatusCodeStart;
+
+    char *statusCode = calloc(STATUS_CODE_LEN + 1, sizeof(char));
+    memcpy(statusCode, posStatusCodeStart, STATUS_CODE_LEN);
+
+    int statusCodeInt = atoi(statusCode);
+    return statusCodeInt;
 }
 
 int connect_with_server() {
@@ -292,17 +303,21 @@ int execute_command_from_stdin() {
             return -1;
         }
 
-        session_cookie = get_session_cookie(response);
-        if (session_cookie == NULL || strlen(session_cookie) == 0) {
-            printf("\nSomething went wrong, please try again\n\n");
-            return -1;
+        int statusCode = get_status_code(response);
+        if (statusCode / 100 == 2) {
+            session_cookie = get_session_cookie(response);
+            if (session_cookie == NULL || strlen(session_cookie) == 0) {
+                printf("\nSomething went wrong, please try again\n\n");
+                return -1;
+            }
+
+            isLogedIn = 1;
         }
 
-        isLogedIn = 1;
         printf("\n%s\n\n", response);
     } else if (strcmp(command, ENTER_CMD) == 0) {
         if (isLogedIn == 0) {
-            printf("\nYou must log in first\n");
+            printf("\nYou must log in first\n\n");
             return -1;
         }
 
@@ -327,7 +342,7 @@ int execute_command_from_stdin() {
         printf("\n%s\n\n", response);
     } else if (strcmp(command, GET_BOOKS_CMD) == 0) {
         if (isLogedIn == 0) {
-            printf("\nYou must log in first\n");
+            printf("\nYou must log in first\n\n");
             return -1;
         }
 

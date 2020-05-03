@@ -60,12 +60,15 @@
 
 #define MAX_ID_SIZE 10
 #define URL_BOOKS_SIZE 26
+#define STATUS_CODE_LEN 3
 
 #define MAX_TITLE_LEN 64
 #define MAX_AUTHOR_LEN 64
 #define MAX_GENRE_LEN 64
 #define MAX_PUBLISHER_LEN 64
 #define MAX_PAGE_COUNT_LEN 10
+
+
 
 /* returneaza un string in format JSON ce contine username-ul si parola trimise ca parametru */
 char *get_json_string_username_password(const char *username, const char *password);
@@ -80,6 +83,8 @@ char *get_token_from_body(const char* body);
 
 /* extrage componenta body din mesajul HTTP primit ca parametru */
 char *get_message_body(const char* msg);
+
+int get_status_code(const char *msg);
 
 int connect_with_server();
 
