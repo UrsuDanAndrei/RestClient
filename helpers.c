@@ -1,3 +1,6 @@
+#include "helpers.h"
+#include "buffer.h"
+
 #include <stdlib.h>     /* exit, atoi, malloc, free */
 #include <stdio.h>
 #include <unistd.h>     /* read, write, close */
@@ -6,8 +9,6 @@
 #include <netinet/in.h> /* struct sockaddr_in, struct sockaddr */
 #include <netdb.h>      /* struct hostent, gethostbyname */
 #include <arpa/inet.h>
-#include "helpers.h"
-#include "buffer.h"
 
 #define HEADER_TERMINATOR "\r\n\r\n"
 #define HEADER_TERMINATOR_SIZE (sizeof(HEADER_TERMINATOR) - 1)
