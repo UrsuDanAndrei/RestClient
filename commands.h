@@ -37,6 +37,22 @@
 #define LOGOUT_CMD "logout"
 #define EXIT_CMD "exit"
 
+void execute_register(int *ret_code);
+
+char* execute_login(int isLogedIn, int *ret_code);
+
+char* execute_enter_library(int isLogedIn, char *session_cookie, int *ret_code);
+
+void execute_get_books(int isLogedIn, char *token, int *ret_code);
+
+void execute_get_book(int isLogedIn, char *token, int *ret_code);
+
+void execute_add_book(int isLogedIn, char *token, int *ret_code);
+
+void execute_delete_book(int isLogedIn, char *token, int *ret_code);
+
+void execute_logout(int isLogedIn, char *session_cookie, int *ret_code);
+
 int execute_command_from_stdin();
 
 #endif // __COMMANDS_H__
