@@ -1,8 +1,191 @@
 Nume: Ursu Dan-Andrei
 Grupa: 324CA
 
-================================================================================
+=== Descriere generala =========================================================
+
+Executia programului porneste din fisierul client.c, unde se apeleaza intr-o
+bucla infinita functia execute_command. Aceasta functie returneaza 0, in cazul
+in care s-a dat comanda exit pentru a inceta executia programului. Functia are
+rolul de a citi o comanda de la stdin, de a apela functia corespunzatoare acelei
+comenzi si de a retine statusul user-ului logat utilizand variabilele statice
+isLogedIn, session_cookie (cookie-ul intors in urma introducerii comenzii login)
+si token (token-ul JWT prin care se demonstreaza accesul la biblioteca). Fiecare
+comanda precizata in enunt are propria ei functie denumita
+execute_<comanda_de_la_stdin> implementata in fisierul stdin_commands.c, ce are
+rolul de a se asigura de corectitudinea input-ului oferit si de a executa
+comportamentul dorit. Majoritatea functiilor din fisierul stdin_commands.c,
+utilizeaza omologul lor din fisierul server_commands.c pentru a transmite
+comenzile user-ului mai departe catre server. Pentru realizarea mesajelor HTTP
+trimise catre server, functiile din server_commands.c utilizeaza functia
+compute_request implementata in fisierul requests.c. De asemenea, pentru o a
+extrage/introduce informatii corect in mesajele HTTP se utilizeaza functiile din
+fisierul message_parser.c, iar pentru a realiza conexiunea TCP am utilizat
+functiile din helpers.c (fisier preluat din laboratorul 10).
 
 === message_parser.c ===========================================================
 
-Se apeleaza intr-o bulca infinata functia execute commands
+Pentru introducerea campurilor si generarea de string-uri in format JSON am
+utilizat biblioteca parson: https://github.com/kgabis/parson.
+
+get_json_string_username_password:
+Returneaza un string in format JSON ce contine username-ul si parola primite ca
+parametri. Se creaza un obiect JSON in care se introduc informatiile dorite si
+se converteste intr-un string.
+
+get_json_string_book:
+Returneaza un string in format JSON ce contine datele cartii primite ca
+parametri. Se creaza un obiect JSON in care se introduc informatiile dorite si
+se converteste intr-un string.
+
+get_session_cookie:
+Returneaza cookie-ul de sesiune extras din mesajul primit ca parametru.
+
+get_token_from_body:
+Extrage token-ul JWT din body-ul primit ca parametru.
+
+get_message_body:
+Extrage componenta body din mesajul HTTP primit ca parametru.
+
+get_status_code:
+Extrage status code-ul din mesajul HTTP primit ca parametru.
+
+=== request.c ==================================================================
+
+typedef enum {GET, POST, DELETE} reuqest_type
+
+compute_request:
+Compune un request HTTP de tipul type pe baza parametrilor primiti. Functia
+primeste prin intermediul campului query_params parametrii cererii. Acestia,
+daca exista, sunt uniti intr-un singur string denumit all_query_params in care
+separarea se realizeaza pe baza caracterului '&'. Dupa aceea se adauga prima
+linie din request-ul HTTP, care contine tipul cererei, url-ul si parametrii
+cereri. Urmeaza adaugarea header-elor HTTP primite ca parametru, cate unul pe
+linie. In cazul in care request-ul contine si un body, este necesara construirea
+lui pentru a se completa header-ul "Content-Length". Daca trebuie adaugate
+cookies, acestea sunt plasate toate pe o linie separate de caracterul ';'. Dupa
+marcarea finalului sectiunii de headere se adauga body-ul mesajului (daca acesta
+exista) si se returneaza request-ul construit.
+
+=== server_commands.c ==========================================================
+
+connect_with_server:
+Realizeaza conexiunea cu server-ul specificat: 
+"ec2-3-8-116-10.eu-west-2.compute.amazonaws.com", apeland functia
+open_connection din fisierul helpers.c cu ip-ul extras din numele de domeniu.
+
+Functiiile care urmeaza se comporta, in general, astfel:
+- genereaza header-ele necesare mesajului (de exemplu header-ul Authorization,
+unde este introdus token-ul JWT primit ca parametru).
+- genereaza cookie-urile necesare mesajului (de exemplu cookie-ul de sesiune).
+- genereaza body-ul necesar mesajului
+- apeleaza functia compute_request cu parametrii generati mai sus pentru a
+obtine mesajul HTTP.
+- deschide conexiunea TCP cu server-ul
+- trimite mesajul HTTP
+- primeste raspunsul de la server
+- inchide conexiunea cu server-ul
+- elibereaza memoria alocata
+- returneaza raspunsul server-ului
+
+registe_account:
+Inregistreaza un nou utilizator cu username-ul si parola primite ca parametru.
+
+login:
+Logheaza utilizatorul cu username-ul si parola primite ca parametru (din
+raspunsul HTTP primit se poate extrage un cookie de sesiune).
+
+get_library_access:
+Primeste un cookie de sesiune si returneaza raspunsul HTTP primit de la
+server cand se solicita accesul in biblioteca, din mesajul returnat se poate
+extrage un token JWT.
+
+get_all_books:
+Primeste un token JWT pentru a demonstra accesul la biblioteca, returneaza
+mesajul HTTP primit de la server in urma solicitarii tuturor cartilor.
+
+get_book:
+Primeste un token JWT pentru a demonstra accesul la biblioteca, returneaza
+mesajul HTTP primit de la server in urma solicitarii cartii id.
+
+add_book:
+Primeste un token JWT pentru a demonstra accesul la biblioteca, returneaza
+mesajul HTTP primit de la server in urma adaugarii cartii definita de ceilalti
+parametrii primiti.
+
+delete_book:
+Primeste un token JWT pentru a demonstra accesul la biblioteca, returneaza
+mesajul HTTP primit de la server in urma stergerii cartii id.
+
+logout:
+Primeste un token JWT pentru a demonstra accesul la biblioteca, returneaza
+mesajul HTTP primit de la server in urma cererii de logout.
+
+=== stdin_commands.c ===========================================================
+
+Functiile care urmeaza se comporta, in general, astfel:
+- citesc (si solicita) date de la input si le verifica corectitudinea pentru
+tipul de comanda primita
+- afiseaza diverse mesaje de eroare in cazurile in care: input-ul dat de user
+este invalid (intelesul lui invalid difera de la comanda la comanda), nu s-a
+completat un camp obligatoriu, user-ul nu este logat, user-ul este deja logat,
+user-ul nu a obtinut acces la biblioteca, a avut loc o eroare la conexiunea
+cu server-ul, etc...
+- isi apeleaza omolog-ul din fisierul server_commands.c pentru a trimite comanda
+mai departe catre server
+- afiseaza raspunsul primit de la server
+- returneaza prin parametrul ret_code unul din codurile: 1 = executia s-a
+desfasurat corect, -1 = a aparut o eroare.
+
+void execute_register:
+Realizeaza inregistrarea unui user nou.
+
+execute_login:
+Realizeaza logarea unui user si returneaza cookie-ului de sesiune obtinut in
+urma logarii (in cazul in care niciun user nu este logat in
+momentul apelului si in cazul in care exista deja un cont inregistrat pe server
+care se potriveste cu username-ul si parola introduse).
+
+execute_enter_library:
+Realizeaza "intrarea in biblioteca" prin returnarea token-ul JWT (daca niciun
+utilizator nu  este logat se afiseaza doar un mesaj de eroare si se
+returneaza NULL).
+
+execute_get_books:
+Compune mesajul corespunzator comenzii get_books
+(daca niciun utilizator nu este logat sau nu detine un token pentru a demonstra
+accesul in biblioteca afiseaza doar un mesaj de eroare).
+
+execute_get_book:
+Compune mesajul corespunzator comenzii get_book, verifica ca id-ul introdus sa
+fie un numar pozitiv, in caz contrar afiseaza un mesaj de eroare.
+(daca niciun utilizator nu este logat sau nu detine un token pentru a demonstra
+accesul in biblioteca afiseaza doar un mesaj de eroare).
+
+execute_add_book:
+Compune mesajul corespunzator comenzii add_book, verifica ca informatiile
+introduse fie nenule si valide.
+(daca niciun utilizator nu este logat sau nu detine un token pentru a demonstra
+accesul in biblioteca afiseaza doar un mesaj de eroare).
+
+execute_delete_book:
+Compune mesajul corespunzator comenzii delete_book, verifica ca id-ul introdus
+sa fie un numar pozitiv, in caz contrar afiseaza un mesaj de eroare.
+(daca niciun utilizator nu este logat sau nu detine un token pentru a demonstra
+accesul in biblioteca afiseaza doar un mesaj de eroare).
+
+execute_logout:
+Realizeaza procesul de logout, stergand eventual din memorie cookie-ul si
+token-ul obtinut prin comenziile anterioare.
+
+execute_command_from_stdin():
+Executa comenzile primite de la stdin prin apelul unei functii de mai sus,
+returneaza 0 in cazul in care s-a primit comanda exit si trebuie oprita executia
+programului, -1 daca s-a introdus o comanda invalida si 1 daca totul este ok si
+comanda primita a fost executata cu succes.
+
+=== client.c ===================================================================
+
+Se apeleaza intr-o bulca infinata functia execute commands de unde se efectueaza
+comenziile citire de la tastatura.
+
+================================================================================

@@ -23,9 +23,6 @@
 #define TOKEN "token"
 #define STATUS_CODE_LEN 3
 
-/* returneaza 1 daca str reprezinta un numar pozitiv, 0 altfel */
-int is_positive_number(const char *str);
-
 /* returneaza un string in format JSON ce contine
 username-ul si parola primite ca parametri */
 char *get_json_string_username_password(const char *username,
@@ -36,7 +33,7 @@ toate informatiile care definesc o carte */
 char *get_json_string_book(const char *title, const char *author,
                     const char *genre, int page_count, const char *publisher);
 
-/* reurneaza cookie-ul de sesiune extras din mesajul primit ca parametru */
+/* returneaza cookie-ul de sesiune extras din mesajul primit ca parametru */
 char *get_session_cookie(char *msg);
 
 /* extrage token-ul JWT din body-ul primit ca parametru */

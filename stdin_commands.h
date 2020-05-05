@@ -84,7 +84,7 @@ void execute_logout(int isLogedIn, char *session_cookie, int *ret_code);
 
 /* executa comenzile primite de la stdin, returneaza 0 in cazul in care s-a
 primit comanda exit si trebuie oprita executia programului, -1 daca s-a introdus
-o  comanda invalida si 1 daca totul este ok si comanda primita a fost executata
+o comanda invalida si 1 daca totul este ok si comanda primita a fost executata
 cu succes */
 int execute_command_from_stdin();
 
