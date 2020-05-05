@@ -42,6 +42,7 @@ void execute_register(int *ret_code) {
         return;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     response = register_account(username, password);
     if (response == NULL || strlen(response) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -50,6 +51,7 @@ void execute_register(int *ret_code) {
     }
 
     printf("\n%s\n\n", response);
+    free(response);
     *ret_code = 1;
 }
 
@@ -58,6 +60,7 @@ char* execute_login(int isLogedIn, int *ret_code) {
     char *response;
     char *session_cookie;
 
+    // se verifica daca utilizatorul este deja logat
     if (isLogedIn == 1) {
         printf("\nYou are already loged in\n\n");
         *ret_code = -1;
@@ -92,6 +95,7 @@ char* execute_login(int isLogedIn, int *ret_code) {
         return NULL;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     response = login(username, password);
     if (response == NULL || strlen(response) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -101,12 +105,14 @@ char* execute_login(int isLogedIn, int *ret_code) {
 
     printf("\n%s\n\n", response);
 
+    // extrage si verifica status code-ul
     int statusCode = get_status_code(response);
     if (statusCode / 100 != 2) {
         *ret_code = -1;
         return NULL;
     }
 
+    // extrage cookie-ul de sesiune din mesaj
     session_cookie = get_session_cookie(response);
     if (session_cookie == NULL || strlen(session_cookie) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -114,20 +120,24 @@ char* execute_login(int isLogedIn, int *ret_code) {
         return NULL;
     }
 
+    free(response);
     *ret_code = 1;
     return session_cookie;
 }
 
-char* execute_enter_library(int isLogedIn, char *session_cookie, int *ret_code) {
+char* execute_enter_library(int isLogedIn, char *session_cookie,
+                                                        int *ret_code) {
     char *token;
     char *response;
 
+    // nu executa comanda decat daca utilizatorul este logat
     if (isLogedIn == 0) {
         printf("\nYou must log in first\n\n");
         *ret_code = -1;
         return NULL;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     response = get_library_access(session_cookie);
     if (response == NULL || strlen(response) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -137,12 +147,14 @@ char* execute_enter_library(int isLogedIn, char *session_cookie, int *ret_code) 
 
     printf("\n%s\n\n", response);
 
+    // verifica status code-ul
     int statusCode = get_status_code(response);
     if (statusCode / 100 != 2) {
         *ret_code = -1;
         return NULL;
     }
 
+    // extrage corpul din mesajul HTTP
     char *body = get_message_body(response);
     if (body == NULL || strlen(body) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -150,6 +162,7 @@ char* execute_enter_library(int isLogedIn, char *session_cookie, int *ret_code) 
         return NULL;
     }
 
+    // extrage token-ul din corp
     token = get_token_from_body(body);
     if (token == NULL || strlen(token) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -157,6 +170,7 @@ char* execute_enter_library(int isLogedIn, char *session_cookie, int *ret_code) 
         return NULL;
     }
 
+    free(response);
     *ret_code = 1;
     return token;
 }
@@ -176,6 +190,7 @@ void execute_get_books(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     response = get_all_books(token);
     if (response == NULL || strlen(response) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -184,6 +199,7 @@ void execute_get_books(int isLogedIn, char *token, int *ret_code) {
     }
 
     printf("\n%s\n\n", response);
+    free(response);
     *ret_code = 1;
 }
 
@@ -203,6 +219,7 @@ void execute_get_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // book id
     char bookId[MAX_ID_LEN];
     memset(bookId, 0, MAX_ID_LEN);
     printf("id=");
@@ -223,6 +240,7 @@ void execute_get_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     int bookIdInt = atoi(bookId);
     response = get_book(token, bookIdInt);
     if (response == NULL || strlen(response) == 0) {
@@ -232,6 +250,7 @@ void execute_get_book(int isLogedIn, char *token, int *ret_code) {
     }
 
     printf("\n%s\n\n", response);
+    free(response);
     *ret_code = 1;
 }
 
@@ -251,6 +270,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // title
     char title[MAX_TITLE_LEN];
     memset(title, 0, MAX_TITLE_LEN);
     printf("title=");
@@ -265,6 +285,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // author
     char author[MAX_AUTHOR_LEN];
     memset(author, 0, MAX_AUTHOR_LEN);
     printf("author=");
@@ -279,6 +300,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // genre
     char genre[MAX_GENRE_LEN];
     memset(genre, 0, MAX_GENRE_LEN);
     printf("genre=");
@@ -293,6 +315,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // publisher
     char publisher[MAX_PUBLISHER_LEN];
     memset(publisher, 0, MAX_PUBLISHER_LEN);
     printf("publisher=");
@@ -307,6 +330,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // page count
     char pageCount[MAX_PAGE_COUNT_LEN];
     memset(pageCount, 0, MAX_PAGE_COUNT_LEN);
     printf("page_count=");
@@ -329,6 +353,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
 
     int page_count = atoi(pageCount);
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     response = add_book(token, title, author, genre, page_count, publisher);
     if (response == NULL || strlen(response) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -337,6 +362,7 @@ void execute_add_book(int isLogedIn, char *token, int *ret_code) {
     }
 
     printf("\n%s\n\n", response);
+    free(response);
     *ret_code = 1;
 }
 
@@ -356,6 +382,7 @@ void execute_delete_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // book id
     char bookId[MAX_ID_LEN];
     memset(bookId, 0, MAX_ID_LEN);
     printf("id=");
@@ -376,6 +403,7 @@ void execute_delete_book(int isLogedIn, char *token, int *ret_code) {
         return;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     int bookIdInt = atoi(bookId);
     response = delete_book(token, bookIdInt);
     if (response == NULL || strlen(response) == 0) {
@@ -385,6 +413,7 @@ void execute_delete_book(int isLogedIn, char *token, int *ret_code) {
     }
 
     printf("\n%s\n\n", response);
+    free(response);
     *ret_code = 1;
 }
 
@@ -397,6 +426,7 @@ void execute_logout(int isLogedIn, char *session_cookie, int *ret_code) {
         return;
     }
 
+    // obtine si valideaza raspunsul obtinut in urma cererii trimise
     response = logout(session_cookie);
     if (response == NULL || strlen(response) == 0) {
         printf("\nSomething went wrong, please try again\n\n");
@@ -406,18 +436,22 @@ void execute_logout(int isLogedIn, char *session_cookie, int *ret_code) {
 
     int statusCode = get_status_code(response);
     if (statusCode / 100 != 2) {
+        printf("\n%s\n\n", response);
         *ret_code = -1;
         return;
-    }    
+    }
 
     printf("\n%s\n\n", response);
+    free(response);
     *ret_code = 1;
 }
 
 int execute_command_from_stdin() {
+    // variabile utilizate pentru a mentine statusul utilizatorului
     static int isLogedIn = 0;
     static char *session_cookie = NULL;
     static char *token = NULL;
+
     int ret_code = 1;
 
     char *ret_ptr = NULL;
@@ -438,7 +472,8 @@ int execute_command_from_stdin() {
             session_cookie = local_cookie;
         }
     } else if (strcmp(command, ENTER_CMD) == 0) {
-        char *local_token = execute_enter_library(isLogedIn, session_cookie, &ret_code);
+        char *local_token = execute_enter_library(isLogedIn, session_cookie,
+                                                                    &ret_code);
         if (ret_code == 1) {
             token = local_token;
         }

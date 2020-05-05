@@ -1,16 +1,19 @@
 #include "requests.h"
 
-char *compute_request(reuqest_type type, char *host, char *url, char **query_params, int querys_count,
-                        char **headers, int headers_count, char **cookies, int cookies_count,  char* content_type,
-                        char **body_data, int body_data_fields_count) {
+char *compute_request(reuqest_type type, char *host, char *url,
+                                char **query_params, int querys_count,
+                                char **headers, int headers_count,
+                                char **cookies, int cookies_count, 
+                                char* content_type,
+                                char **body_data, int body_data_fields_count) {
     // se aloca spatiu pentru request
     char *message = calloc(BUFLEN, sizeof(char));
     char *line = calloc(LINELEN, sizeof(char));
-    char *body_data_buffer = NULL;
-    char *all_query_params = NULL;
+    char *all_query_params = calloc(LINELEN, sizeof(char));
+    char *body_data_buffer = calloc(LINELEN, sizeof(char));
 
+    // se adauga parametrii de cerere daca este cazul
     if (query_params != NULL) {
-        all_query_params = calloc(LINELEN, sizeof(char));
         strcat(all_query_params, query_params[0]);
         for (int i = 1; i < querys_count; ++i) {
             strcat(all_query_params, "&");
@@ -18,6 +21,7 @@ char *compute_request(reuqest_type type, char *host, char *url, char **query_par
         }
     }
 
+    // se adauga tipul cererii
     switch(type) {
         case GET:
             if (query_params != NULL) {
@@ -72,8 +76,6 @@ char *compute_request(reuqest_type type, char *host, char *url, char **query_par
 
     // se creaza corpul mesajului (daca acesta exista)
     if (body_data != NULL) {
-        body_data_buffer = calloc(LINELEN, sizeof(char));
-
         strcat(body_data_buffer, body_data[0]);
         for (int i  = 1; i < body_data_fields_count; ++i) {
             strcat(body_data_buffer, "&");
@@ -114,5 +116,7 @@ char *compute_request(reuqest_type type, char *host, char *url, char **query_par
     }
 
     free(line);
+    free(all_query_params);
+    free(body_data_buffer);
     return message;
 }

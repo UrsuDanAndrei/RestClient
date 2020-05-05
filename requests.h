@@ -14,8 +14,12 @@
 
 typedef enum {GET, POST, DELETE} reuqest_type;
 
-char *compute_request(reuqest_type type, char *host, char *url, char **query_params, int querys_count,
-                        char **headers, int headers_count, char **cookies, int cookies_count,  char* content_type,
-                        char **body_data, int body_data_fields_count);
+/* compune un request HTTP de tipul type pe baza parametrilor primiti */
+char *compute_request(reuqest_type type, char *host, char *url,
+                                char **query_params, int querys_count,
+                                char **headers, int headers_count,
+                                char **cookies, int cookies_count, 
+                                char* content_type,
+                                char **body_data, int body_data_fields_count);
 
 #endif // __REQUESTS_H__

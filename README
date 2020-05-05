@@ -1,0 +1,8 @@
+Nume: Ursu Dan-Andrei
+Grupa: 324CA
+
+================================================================================
+
+=== message_parser.c ===========================================================
+
+Se apeleaza intr-o bulca infinata functia execute commands
