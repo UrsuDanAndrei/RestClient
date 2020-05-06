@@ -11,6 +11,7 @@ char *get_json_string_username_password(const char *username,
 
     // converteste obiectul creat intr-un string
     char *serialized_string = json_serialize_to_string_pretty(root_value);
+    json_value_free(root_value);
     return serialized_string;
 }
 
@@ -28,6 +29,7 @@ char *get_json_string_book(const char *title, const char *author,
 
     // converteste obiectul creat intr-un string
     char *serialized_string = json_serialize_to_string_pretty(root_value);
+    json_value_free(root_value);
     return serialized_string;
 }
 
@@ -47,7 +49,12 @@ char *get_session_cookie(char *msg) {
 
 char *get_token_from_body(const char *body) {
     JSON_Value *json_body = json_parse_string(body);
-    char *token = (char *)json_object_get_string(json_object(json_body), TOKEN);
+    char *local_token = (char *) json_object_get_string(json_object(json_body),
+                                                                         TOKEN);
+    char *token = calloc(strlen(local_token) + 1, sizeof(char));
+    memcpy(token, local_token, strlen(local_token));
+    
+    json_value_free(json_body);
     return token;
 }
 
@@ -85,5 +92,6 @@ int get_status_code(const char *msg) {
     memcpy(statusCode, posStatusCodeStart, STATUS_CODE_LEN);
 
     int statusCodeInt = atoi(statusCode);
+    free(statusCode);
     return statusCodeInt;
 }

@@ -188,4 +188,8 @@ comanda primita a fost executata cu succes.
 Se apeleaza intr-o bulca infinata functia execute commands de unde se efectueaza
 comenziile citire de la tastatura.
 
+=== Alte detalii ===============================================================
+
+La rularea cu valgrind nu am gasit leak-uri de memorie.
+
 ================================================================================

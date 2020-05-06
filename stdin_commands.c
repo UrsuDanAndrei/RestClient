@@ -170,6 +170,7 @@ char* execute_enter_library(int isLogedIn, char *session_cookie,
         return NULL;
     }
 
+    free(body);
     free(response);
     *ret_code = 1;
     return token;
@@ -472,6 +473,11 @@ int execute_command_from_stdin() {
             session_cookie = local_cookie;
         }
     } else if (strcmp(command, ENTER_CMD) == 0) {
+        if (token != NULL) {
+            free(token);
+            token = NULL;
+        }
+
         char *local_token = execute_enter_library(isLogedIn, session_cookie,
                                                                     &ret_code);
         if (ret_code == 1) {
@@ -489,10 +495,30 @@ int execute_command_from_stdin() {
         execute_logout(isLogedIn, session_cookie, &ret_code);
         if (ret_code == 1) {
             isLogedIn = 0;
-            session_cookie = NULL;
-            token = NULL;
+
+            if (session_cookie != NULL) {
+                free(session_cookie);
+                session_cookie = NULL;
+            }
+
+            if (token != NULL) {
+                free(token);
+                token = NULL;
+            }
         }
     } else if (strcmp(command, EXIT_CMD) == 0) {
+        isLogedIn = 0;
+
+        if (session_cookie != NULL) {
+            free(session_cookie);
+            session_cookie = NULL;
+        }
+
+        if (token != NULL) {
+            free(token);
+            token = NULL;
+        }
+
         ret_code = 0;
     } else {
         printf("\nComanda este invalida\n\n");
